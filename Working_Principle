@@ -1,0 +1,48 @@
+⚙️ Working Principle
+
+The working principle of the ESP32 Gas & Proximity Safety Alarm System operates in 4 sequential stages: Power Conversion, Dual Sensing, Hazard Decision, and Transistorized Actuation.
+
+---
+Stage 1: Power Conversion & Mains Protection
+* 230V AC Input: High-voltage AC mains enters through 2-pin screw terminal `J1`.
+* Safety Protection:
+  * Fuse `F1` (1A) protects against overcurrent short circuits.
+  * Varistor `RV1` (B72220S0301K101) clamps high-voltage line surges up to 470V AC.
+* AC-to-DC Conversion: The `HLK-10M05` module converts 230V AC to a regulated +5V DC rail (`EXT_5V`) and 0V Ground (`GND` / `GD`).
+* Filtering: Capacitors `C1` (100µF) and `C2` (0.1µF) remove AC ripple noise, providing clean 5V DC to power the ESP32 (`J2 19`), MQ-04 sensor heater, relay coil, and buzzer.
+
+---
+
+ Stage 2: Dual Sensor Acquisition
+* MQ-04 Combustible Gas Sensing:
+  * The sensor's internal tin dioxide (SnO2) heating element warms up. When gas is present, sensor resistance drops.
+  * Analog Output (A0): Passes through voltage divider `R2 (15kΩ)` / `R6 (15kΩ)` to ESP32 pin `J2 5 (IO34)` for ADC gas level measurement.
+  * Digital Output (D0): Passes through voltage divider `R3 (10kΩ)` / `R5 (15kΩ)` to ESP32 pin `J2 6 (IO35)` for instant threshold detection.
+
+* HC-SR04 Ultrasonic Distance Sensing:
+  * ESP32 sends a 10µs trigger pulse from `J3 9 (IO18)` to sensor pin `TRIG`.
+  * The sensor emits an 8-cycle 40kHz ultrasonic sound burst and waits for the echo.
+  * The returned `ECHO` pulse width time (t) passes through voltage divider `R1 (10kΩ)` / `R4 (15kΩ)` back to `J3 9 (IO18)`.
+  * ESP32 calculates obstacle distance: **`Distance (cm) = (time * 0.0343) / 2`**
+
+---
+
+ Stage 3: Hazard Evaluation & Processing
+The ESP32 dual-core processor continuously compares measured gas level and distance against set safety thresholds:
+* SAFE State: Gas level is low AND obstacle distance is safe → Outputs remain LOW.
+* HAZARD State: Gas detected OR obstacle gets too close → ESP32 triggers emergency outputs (`RELAY` and `INP`).
+
+---
+
+ Stage 4: Transistorized Output Actuation
+
+1. Relay Load Control (`RELAY` Net):
+   * ESP32 sets pin `J3 2 (IO23)` HIGH (`RELAY` net).
+   * Base current flows through `R7 (1kΩ)` turning ON NPN transistor `Q1 (BD139G)`.
+   * `Q1` energizes 5V Relay coil `K1 (SRD-05VDC-SL-C)`, closing terminal `J2` to switch ON external safety equipment (e.g. exhaust fan or shutoff valve).
+   * Flyback diode `D1 (1N4007)` suppresses inductive voltage spikes across the relay coil.
+
+2. Audible & Visual Alarm (`INP` Net):
+   * ESP32 sets pin `J3 6 (IO21)` HIGH (`INP` net).
+   * Audible Alarm: Base current flows through `R8 (1kΩ)` turning ON NPN transistor `Q2 (BD139G)`, sounding 5V Piezo Buzzer `LS1`. Diode `D2 (1N4007)` protects `Q2` from buzzer flyback spikes.
+   * Visual Alarm: Current flows through `R9 (330Ω)` to illuminate Green Status LED `D3`.
