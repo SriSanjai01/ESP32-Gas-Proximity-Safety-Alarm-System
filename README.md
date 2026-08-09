@@ -54,3 +54,15 @@ This project combines gas leakage detection, ultrasonic distance sensing, and hi
 | **`J3 9`** | `IO18` | **`TRIG`** & **`ECHO`** | Ultrasonic `TRIG` (Pin 2) & `ECHO` (Pin 3 via `R1 10k`/`R4 15k`) | Ultrasonic Distance Measurement |
 
 ---
+markdown
+
+
+## 🚧 Challenges Faced & Solutions
+### 1. Custom Integrated Library Creation (`.IntLib` / `.LibPkg`)
+* **Challenge**: There were no pre-existing integrated libraries available for several core components, including the **MQ-04 Gas Sensor Module**, **HC-SR04 Ultrasonic Sensor Module**, and **Glass Tube Fuseholder**.
+* **Solution**: Built custom **Schematic Libraries (`.SchLib`)** from scratch for each symbol, created exact **PCB Footprint Libraries (`.PcbLib`)** following IPC pad/pitch specifications, sourced 3D STEP CAD models online, aligned the 3D bodies to the pads, and compiled a custom **Integrated Library Package (`.LibPkg`)**.
+### 2. Single-Layer PCB Trace Routing Constraints
+* **Challenge**: Designing and routing the entire PCB under strict **Single-Layer (Single-Sided PCB)** manufacturing constraints without signal line crossovers.
+* **Solution**: Strategic component placement was planned to ensure short net paths, routing 5V power and ground buses along outer boundaries, and optimizing trace widths to handle high-voltage 230V AC lines, high-current relay coils, and sensitive 3.3V logic signals on a single copper layer.
+ 
+---
